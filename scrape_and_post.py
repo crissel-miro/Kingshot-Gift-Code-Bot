@@ -60,17 +60,15 @@ def save_seen(seen):
 
 
 def post_to_discord(new_codes):
-    # Single message listing all new codes found in this run.
-    if len(new_codes) == 1:
-        codes_line = f'"{new_codes[0]}"'
-    else:
-        codes_line = ", ".join(f'"{c}"' for c in new_codes)
+    # Each new code gets its own bold line for easy scanning.
+    codes_block = "\n".join(f"🎁 **{c}**" for c in new_codes)
 
     plural = len(new_codes) > 1
     header_suffix = "S" if plural else ""
     content = (
         f"📢 **NEW KINGSHOT GIFT CODE{header_suffix}!** 🎁\n\n"
-        f"New **Gift Code{'s' if plural else ''}** ha{'ve' if plural else 's'} been released: {codes_line}\n\n"
+        f"New **Gift Code{'s' if plural else ''}** ha{'ve' if plural else 's'} been released:\n"
+        f"{codes_block}\n\n"
         f"Don't miss out on your free rewards.\n\n"
         f"🎁 **Redeem your code:**\n"
         f"https://ks-giftcode.centurygame.com/\n\n"
