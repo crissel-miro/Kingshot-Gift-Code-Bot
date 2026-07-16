@@ -1,0 +1,38 @@
+name: Check Kingshot Gift Codes
+
+on:
+  schedule:
+    # Runs every 30 minutes. Edit the cron expression to change frequency.
+    - cron: "*/30 * * * *"
+  workflow_dispatch: {}   # lets you manually trigger a run from the Actions tab
+
+permissions:
+  contents: write
+
+jobs:
+  check-codes:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install requests beautifulsoup4
+
+      - name: Run scraper
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: python scrape_and_post.py
+
+      - name: Commit updated seen_codes.json (if changed)
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add seen_codes.json
+          git diff --staged --quiet || git commit -m "Update seen codes"
+          git push
