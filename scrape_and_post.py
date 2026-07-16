@@ -60,13 +60,21 @@ def save_seen(seen):
 
 
 def post_to_discord(new_codes):
-    lines = "\n".join(f"🎁 `{c}`" for c in new_codes)
-    content = (
-        f"**New Kingshot gift code(s) found!**\n{lines}\n"
-        f"Redeem here: https://ks-giftcode.centurygame.com/"
-    )
-    resp = requests.post(WEBHOOK_URL, json={"content": content}, timeout=20)
-    resp.raise_for_status()
+    # One message per new code, using the requested announcement format.
+    for code in new_codes:
+        content = (
+            f"📢 **NEW KINGSHOT GIFT CODE!** 🎁\n\n"
+            f"A new **Gift Code** has been released: \"{code}\"\n\n"
+            f"Don't miss out on your free rewards.\n\n"
+            f"🔍 **View the latest code:**\n"
+            f"https://kingshotwiki.com/giftcodes/\n\n"
+            f"🎁 **Redeem your code:**\n"
+            f"https://ks-giftcode.centurygame.com/\n\n"
+            f"⏰ **Gift codes can expire quickly, so redeem them as soon as possible!**\n\n"
+            f"🏎️ **RDK N CHILL.**"
+        )
+        resp = requests.post(WEBHOOK_URL, json={"content": content}, timeout=20)
+        resp.raise_for_status()
 
 
 def main():
