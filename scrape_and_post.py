@@ -66,10 +66,11 @@ def post_to_discord(new_codes):
     else:
         codes_line = ", ".join(f'"{c}"' for c in new_codes)
 
-    plural = "S" if len(new_codes) > 1 else ""
+    plural = len(new_codes) > 1
+    header_suffix = "S" if plural else ""
     content = (
-        f"📢 **NEW KINGSHOT GIFT CODE{plural}!** 🎁\n\n"
-        f"New **Gift Code{plural}** ha{'ve' if plural else 's'} been released: {codes_line}\n\n"
+        f"📢 **NEW KINGSHOT GIFT CODE{header_suffix}!** 🎁\n\n"
+        f"New **Gift Code{'s' if plural else ''}** ha{'ve' if plural else 's'} been released: {codes_line}\n\n"
         f"Don't miss out on your free rewards.\n\n"
         f"🔍 **View the latest code:**\n"
         f"https://kingshotwiki.com/giftcodes/\n\n"
