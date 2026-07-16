@@ -72,8 +72,6 @@ def post_to_discord(new_codes):
         f"📢 **NEW KINGSHOT GIFT CODE{header_suffix}!** 🎁\n\n"
         f"New **Gift Code{'s' if plural else ''}** ha{'ve' if plural else 's'} been released: {codes_line}\n\n"
         f"Don't miss out on your free rewards.\n\n"
-        f"🔍 **View the latest code:**\n"
-        f"https://kingshotwiki.com/giftcodes/\n\n"
         f"🎁 **Redeem your code:**\n"
         f"https://ks-giftcode.centurygame.com/\n\n"
         f"⏰ **Gift codes can expire quickly, so redeem them as soon as possible!**\n\n"
