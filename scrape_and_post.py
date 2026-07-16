@@ -16,18 +16,35 @@ def get_active_codes():
     resp.raise_for_status()
 
     soup = BeautifulSoup(resp.text, "html.parser")
-    page_text = soup.get_text(separator="\n")
+    codes = set()
 
-    # The site lists codes between "Active Codes:" and "Concierge member codes:",
-    # each one immediately followed by the word "Copy" (a copy-button label).
-    match = re.search(r"Active Codes:(.*?)Concierge member codes:", page_text, re.S)
+    # Primary strategy: each gift code is shown as a list item with a "Copy"
+    # button, e.g. "KS0715 Copy". We don't rely on exact heading text/formatting
+    # since that can change; instead we look at every <li> on the page and keep
+    # ones that look like "<code>Copy" (case-insensitive, any whitespace between).
+    for li in soup.find_all("li"):
+        text = li.get_text(separator=" ", strip=True)
+        m = re.match(r"^([A-Za-z0-9]{4,25})\s*copy$", text, re.I)
+        if m:
+            candidate = m.group(1)
+            if any(ch.isdigit() for ch in candidate):
+                codes.add(candidate)
+
+    if codes:
+        return sorted(codes)
+
+    # Fallback strategy: scan the whole page's plain text for the section
+    # between "Active Codes" and "Concierge", allowing for whitespace/newlines
+    # between a code and its "Copy" button label.
+    page_text = soup.get_text(separator="\n")
+    match = re.search(r"Active Codes:?(.*?)Concierge", page_text, re.S | re.I)
     if not match:
-        print("Could not find the 'Active Codes' section — site layout may have changed.")
+        print("Could not find any gift codes — site layout may have changed.")
         return []
 
     section = match.group(1)
-    codes = re.findall(r"\b([A-Za-z0-9]{4,})Copy", section)
-    return sorted(set(codes))
+    found = re.findall(r"\b([A-Za-z0-9]{4,25})\s*Copy\b", section, re.I)
+    return sorted(set(c for c in found if any(ch.isdigit() for ch in c)))
 
 
 def load_seen():
