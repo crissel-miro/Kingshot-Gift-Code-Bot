@@ -60,21 +60,26 @@ def save_seen(seen):
 
 
 def post_to_discord(new_codes):
-    # One message per new code, using the requested announcement format.
-    for code in new_codes:
-        content = (
-            f"📢 **NEW KINGSHOT GIFT CODE!** 🎁\n\n"
-            f"A new **Gift Code** has been released: \"{code}\"\n\n"
-            f"Don't miss out on your free rewards.\n\n"
-            f"🔍 **View the latest code:**\n"
-            f"https://kingshotwiki.com/giftcodes/\n\n"
-            f"🎁 **Redeem your code:**\n"
-            f"https://ks-giftcode.centurygame.com/\n\n"
-            f"⏰ **Gift codes can expire quickly, so redeem them as soon as possible!**\n\n"
-            f"🏎️ **RDK N CHILL.**"
-        )
-        resp = requests.post(WEBHOOK_URL, json={"content": content}, timeout=20)
-        resp.raise_for_status()
+    # Single message listing all new codes found in this run.
+    if len(new_codes) == 1:
+        codes_line = f'"{new_codes[0]}"'
+    else:
+        codes_line = ", ".join(f'"{c}"' for c in new_codes)
+
+    plural = "S" if len(new_codes) > 1 else ""
+    content = (
+        f"📢 **NEW KINGSHOT GIFT CODE{plural}!** 🎁\n\n"
+        f"New **Gift Code{plural}** ha{'ve' if plural else 's'} been released: {codes_line}\n\n"
+        f"Don't miss out on your free rewards.\n\n"
+        f"🔍 **View the latest code:**\n"
+        f"https://kingshotwiki.com/giftcodes/\n\n"
+        f"🎁 **Redeem your code:**\n"
+        f"https://ks-giftcode.centurygame.com/\n\n"
+        f"⏰ **Gift codes can expire quickly, so redeem them as soon as possible!**\n\n"
+        f"🏎️ **RDK N CHILL.**"
+    )
+    resp = requests.post(WEBHOOK_URL, json={"content": content}, timeout=20)
+    resp.raise_for_status()
 
 
 def main():
