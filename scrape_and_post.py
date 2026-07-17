@@ -26,9 +26,7 @@ def get_active_codes():
         text = li.get_text(separator=" ", strip=True)
         m = re.match(r"^([A-Za-z0-9]{4,25})\s*copy$", text, re.I)
         if m:
-            candidate = m.group(1)
-            if any(ch.isdigit() for ch in candidate):
-                codes.add(candidate)
+            codes.add(m.group(1))
 
     if codes:
         return sorted(codes)
@@ -44,7 +42,7 @@ def get_active_codes():
 
     section = match.group(1)
     found = re.findall(r"\b([A-Za-z0-9]{4,25})\s*Copy\b", section, re.I)
-    return sorted(set(c for c in found if any(ch.isdigit() for ch in c)))
+    return sorted(set(found))
 
 
 def load_seen():
