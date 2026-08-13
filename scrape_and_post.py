@@ -58,8 +58,8 @@ def save_seen(seen):
 
 
 def post_to_discord(new_codes):
-    # Each new code gets its own bold line for easy scanning.
-    codes_block = "\n".join(f"🎁 **{c}**" for c in new_codes)
+    # Each new code gets its own tappable code block (easy copy on mobile).
+    codes_block = "\n".join(f"🎁 ```{c}```" for c in new_codes)
 
     plural = len(new_codes) > 1
     header_suffix = "S" if plural else ""
