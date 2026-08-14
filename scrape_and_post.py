@@ -16,33 +16,32 @@ def get_active_codes():
     resp.raise_for_status()
 
     soup = BeautifulSoup(resp.text, "html.parser")
-    codes = set()
 
-    # Primary strategy: each gift code is shown as a list item with a "Copy"
-    # button, e.g. "KS0715 Copy". We don't rely on exact heading text/formatting
-    # since that can change; instead we look at every <li> on the page and keep
-    # ones that look like "<code>Copy" (case-insensitive, any whitespace between).
+    # Primary strategy: only look at the text between "Active Codes" and
+    # "Concierge" (the actual codes section on the page). This avoids
+    # accidentally matching unrelated "...Copy" buttons elsewhere on the page
+    # (ads, tracking scripts, share widgets, etc.) that aren't real gift codes.
+    page_text = soup.get_text(separator="\n")
+    match = re.search(r"Active Codes:?(.*?)Concierge", page_text, re.S | re.I)
+    if match:
+        section = match.group(1)
+        found = re.findall(r"\b([A-Za-z0-9]{4,25})\s*Copy\b", section, re.I)
+        codes = sorted(set(found))
+        if codes:
+            return codes
+
+    # Fallback strategy (only used if the section above wasn't found at all,
+    # e.g. the site's heading wording changed): scan every <li> on the page.
+    codes = set()
     for li in soup.find_all("li"):
         text = li.get_text(separator=" ", strip=True)
         m = re.match(r"^([A-Za-z0-9]{4,25})\s*copy$", text, re.I)
         if m:
             codes.add(m.group(1))
 
-    if codes:
-        return sorted(codes)
-
-    # Fallback strategy: scan the whole page's plain text for the section
-    # between "Active Codes" and "Concierge", allowing for whitespace/newlines
-    # between a code and its "Copy" button label.
-    page_text = soup.get_text(separator="\n")
-    match = re.search(r"Active Codes:?(.*?)Concierge", page_text, re.S | re.I)
-    if not match:
+    if not codes:
         print("Could not find any gift codes — site layout may have changed.")
-        return []
-
-    section = match.group(1)
-    found = re.findall(r"\b([A-Za-z0-9]{4,25})\s*Copy\b", section, re.I)
-    return sorted(set(found))
+    return sorted(codes)
 
 
 def load_seen():
@@ -58,8 +57,7 @@ def save_seen(seen):
 
 
 def post_to_discord(new_codes):
-    # Each new code gets its own tappable code block (easy copy on mobile).
-    codes_block = "\n".join(f"🎁 ```{c}```" for c in new_codes)
+    codes_block = "\n".join(f"🎁 `{c}`" for c in new_codes)
 
     plural = len(new_codes) > 1
     header_suffix = "S" if plural else ""
@@ -75,6 +73,14 @@ def post_to_discord(new_codes):
     )
     resp = requests.post(WEBHOOK_URL, json={"content": content}, timeout=20)
     resp.raise_for_status()
+
+    # Follow up with each code as its own standalone message containing
+    # nothing but the code itself. On mobile, long-pressing a message only
+    # copies that message's exact text, so this makes copying just the code
+    # (with nothing else attached) reliable.
+    for code in new_codes:
+        resp = requests.post(WEBHOOK_URL, json={"content": code}, timeout=20)
+        resp.raise_for_status()
 
 
 def main():
