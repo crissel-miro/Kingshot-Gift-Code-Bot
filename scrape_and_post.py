@@ -78,9 +78,9 @@ def post_to_discord(new_codes):
     # nothing but the code itself. On mobile, long-pressing a message only
     # copies that message's exact text, so this makes copying just the code
     # (with nothing else attached) reliable.
-    for code in new_codes:
-        resp = requests.post(WEBHOOK_URL, json={"content": code}, timeout=20)
-        resp.raise_for_status()
+    #for code in new_codes:
+    #    resp = requests.post(WEBHOOK_URL, json={"content": code}, timeout=20)
+    #    resp.raise_for_status()
 
 
 def main():
