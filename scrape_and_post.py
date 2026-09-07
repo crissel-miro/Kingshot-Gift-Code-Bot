@@ -1,12 +1,11 @@
 import json
 import os
-import re
 import sys
+from datetime import datetime, timezone
 
 import requests
-from bs4 import BeautifulSoup
 
-URL = "https://kingshotwiki.com/giftcodes/"
+URL = "https://kingshot.net/api/gift-codes"
 STATE_FILE = "seen_codes.json"
 WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK_URL")
 
@@ -14,34 +13,26 @@ WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK_URL")
 def get_active_codes():
     resp = requests.get(URL, headers={"User-Agent": "Mozilla/5.0"}, timeout=20)
     resp.raise_for_status()
+    payload = resp.json()
 
-    soup = BeautifulSoup(resp.text, "html.parser")
+    gift_codes = payload.get("data", {}).get("giftCodes", [])
+    now = datetime.now(timezone.utc)
 
-    # Primary strategy: only look at the text between "Active Codes" and
-    # "Concierge" (the actual codes section on the page). This avoids
-    # accidentally matching unrelated "...Copy" buttons elsewhere on the page
-    # (ads, tracking scripts, share widgets, etc.) that aren't real gift codes.
-    page_text = soup.get_text(separator="\n")
-    match = re.search(r"Active Codes:?(.*?)Concierge", page_text, re.S | re.I)
-    if match:
-        section = match.group(1)
-        found = re.findall(r"\b([A-Za-z0-9]{4,25})\s*Copy\b", section, re.I)
-        codes = sorted(set(found))
-        if codes:
-            return codes
+    active = []
+    for entry in gift_codes:
+        code = entry.get("code")
+        if not code:
+            continue
+        expires_at = entry.get("expiresAt")
+        if expires_at:
+            # "expiresAt" is null for codes with no expiry; otherwise it's an
+            # ISO timestamp — skip codes that have already expired.
+            expires_dt = datetime.fromisoformat(expires_at.replace("Z", "+00:00"))
+            if expires_dt < now:
+                continue
+        active.append(code)
 
-    # Fallback strategy (only used if the section above wasn't found at all,
-    # e.g. the site's heading wording changed): scan every <li> on the page.
-    codes = set()
-    for li in soup.find_all("li"):
-        text = li.get_text(separator=" ", strip=True)
-        m = re.match(r"^([A-Za-z0-9]{4,25})\s*copy$", text, re.I)
-        if m:
-            codes.add(m.group(1))
-
-    if not codes:
-        print("Could not find any gift codes — site layout may have changed.")
-    return sorted(codes)
+    return sorted(set(active))
 
 
 def load_seen():
@@ -73,14 +64,6 @@ def post_to_discord(new_codes):
     )
     resp = requests.post(WEBHOOK_URL, json={"content": content}, timeout=20)
     resp.raise_for_status()
-
-    # Follow up with each code as its own standalone message containing
-    # nothing but the code itself. On mobile, long-pressing a message only
-    # copies that message's exact text, so this makes copying just the code
-    # (with nothing else attached) reliable.
-    #for code in new_codes:
-    #    resp = requests.post(WEBHOOK_URL, json={"content": code}, timeout=20)
-    #    resp.raise_for_status()
 
 
 def main():
