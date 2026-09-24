@@ -1,6 +1,6 @@
 # Kingshot Gift Code Discord Announcer (Free — GitHub Actions)
 
-Checks https://kingshotwiki.com/giftcodes/ every 30 minutes and posts any **new**
+Checks https://kingshotwiki.com/giftcodes/ every 15 minutes and posts any **new**
 gift code to your Discord channel via webhook. No Make.com, no credits, no server.
 
 ## Setup (5 minutes)
